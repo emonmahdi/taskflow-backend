@@ -64,6 +64,112 @@ const registerUser = async(req, res) => {
 
 }
 
+
+
+const loginUser = async(req, res) => {
+    const {email , password} = req.body;
+    if(!email || !password){
+        return res.status(400).json({success: false, message: 'Email and Password are required.'})
+    }
+
+    try{
+       const user = await User.findOne({email});
+       if(!user){
+        return res.status(401).json({success: false, message: 'Invalid Credentials'})
+       }
+       // matched password
+       const match = await bcrypt.compare(password, user.password)
+
+       if(!match){
+        return res.status(401).json({success: false, message: 'Password does not match'})
+       }
+
+       const token = createToken(user._id)
+
+       return res.status(201).json({
+            success: true, 
+            message: 'User Login Successfully', 
+            token, 
+            user: {
+                id: user._id, 
+                name: user.name, 
+                email: user.email
+            }})
+
+    }catch(err){
+        console.log(err)
+        return res.status(500).json({
+            success: false,
+            message: 'Server Error! User Login failed. Something went wrong!!!'
+        })
+    }
+
+}
+
+
+
+const getCurrentUser = async(req, res) => {
+    try{
+        const id = req.user.id;
+        const user = await User.findById(id).select('name email')
+
+        if(!user){
+             return res.status(401).json({success: false, message: 'User not found'})
+        }
+
+        return res.status(201).json({
+            success: true,   
+            user 
+        })
+
+
+    }catch(err){
+        console.log(err)
+        return res.status(500).json({
+            success: false,
+            message: 'Server Error! User Login failed. Something went wrong!!!'
+        })
+    }
+}
+
+
+// Update Profile
+const updateProfile = async(req, res) => {
+    const {email, password} = req.body;
+
+    if(!email || !password || !validator.isEmail(email)){
+        return res.status(409).json({success:false, message: 'Valid name and email required'})
+    }
+    try{
+        const exists = await User.findOne({email, _id: {$ne: req.user.id}})
+
+        if(exists){
+             return res.status(409).json({success:false, message: 'Email already user try another email'})
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            {name, email},
+            {new: true, runValidators: true, select:'name email'}
+        )
+
+         return res.status(201).json({
+            success: true,   
+            user 
+        })
+
+    }catch(err){
+        console.log(err)
+        return res.status(500).json({
+            success: false,
+            message: 'Server Error! User Login failed. Something went wrong!!!'
+        })
+    }
+}
+
 module.exports = {
-    registerUser
+    registerUser,
+    loginUser,
+    getCurrentUser,
+    updateProfile
 }
