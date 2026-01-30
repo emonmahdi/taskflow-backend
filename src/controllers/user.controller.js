@@ -1,34 +1,36 @@
 import validator from "validator";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/user.model";
+import User from "../models/user.model.js";
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || "my_secret_key";
+
+// if (!JWT_SECRET) {
+//   throw new Error("JWT_SECRET is missing in .env");
+// }
 
 const createToken = async (userId) => {
   return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: "24h" });
 };
 
-const registerUser = async (req, res) => {
+export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
   // validation all fields
   if (!name || !email || !password) {
-    return res.status(400).res.json({
+    return res.status(400).json({
       success: false,
       message: "All field are required",
     });
   }
   // Email Validate
   if (!validator.isEmail(email)) {
-    return res
-      .status(400)
-      .res.json({ success: false, message: "Invalid Email" });
+    return res.status(400).json({ success: false, message: "Invalid Email" });
   }
 
   // password validate
   if (password.length < 8) {
-    return res.status(409).res.json({
+    return res.status(409).json({
       success: false,
       message: "Password must be at least 8 character",
     });
@@ -46,7 +48,7 @@ const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword });
     // token
-    const token = createToken(user._id);
+    const token = await createToken(user._id);
 
     return res.status(201).json({
       success: true,
@@ -67,7 +69,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-const loginUser = async (req, res) => {
+export const loginUser = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res
@@ -91,7 +93,7 @@ const loginUser = async (req, res) => {
         .json({ success: false, message: "Password does not match" });
     }
 
-    const token = createToken(user._id);
+    const token = await createToken(user._id);
 
     return res.status(201).json({
       success: true,
@@ -112,7 +114,7 @@ const loginUser = async (req, res) => {
   }
 };
 
-const getCurrentUser = async (req, res) => {
+export const getCurrentUser = async (req, res) => {
   try {
     const id = req.user.id;
     const user = await User.findById(id).select("name email");
@@ -137,7 +139,7 @@ const getCurrentUser = async (req, res) => {
 };
 
 // Update Profile
-const updateProfile = async (req, res) => {
+export const updateProfile = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password || !validator.isEmail(email)) {
@@ -175,7 +177,7 @@ const updateProfile = async (req, res) => {
 };
 
 // update Password
-const updatePassword = async (req, res) => {
+export const updatePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
   if (!currentPassword || !newPassword || newPassword.length < 8) {
@@ -213,12 +215,4 @@ const updatePassword = async (req, res) => {
       message: "Server Error! User Login failed. Something went wrong!!!",
     });
   }
-};
-
-module.exports = {
-  registerUser,
-  loginUser,
-  getCurrentUser,
-  updateProfile,
-  updatePassword,
 };
