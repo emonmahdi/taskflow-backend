@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import connectDB from "../database/db.js";
 import userRoutes from "./routes/user.route.js";
 import tasRoutes from "./routes/task.route.js";
@@ -10,6 +11,11 @@ const PORT = process.env.PORT || 5000;
 
 // middleware
 app.use(express.json());
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+  }),
+);
 
 // All Routes
 app.use("/api/user", userRoutes);
