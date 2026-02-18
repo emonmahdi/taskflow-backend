@@ -139,42 +139,89 @@ export const getCurrentUser = async (req, res) => {
 };
 
 // Update Profile
-export const updateProfile = async (req, res) => {
-  const { email, password } = req.body;
+// export const updateProfile = async (req, res) => {
+//   const { email, password } = req.body;
 
-  if (!email || !password || !validator.isEmail(email)) {
-    return res
-      .status(409)
-      .json({ success: false, message: "Valid name and email required" });
+//   if (!email || !password || !validator.isEmail(email)) {
+//     return res
+//       .status(409)
+//       .json({ success: false, message: "Valid name and email required" });
+//   }
+//   try {
+//     const exists = await User.findOne({ email, _id: { $ne: req.user.id } });
+
+//     if (exists) {
+//       return res.status(409).json({
+//         success: false,
+//         message: "Email already user try another email",
+//       });
+//     }
+
+//     const user = await User.findByIdAndUpdate(
+//       req.user.id,
+//       { name, email },
+//       { new: true, runValidators: true, select: "name email" },
+//     );
+
+//     return res.status(201).json({
+//       success: true,
+//       user,
+//     });
+//   } catch (err) {
+//     console.log(err);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server Error! User Login failed. Something went wrong!!!",
+//     });
+//   }
+// };
+export const updateProfile = async (req, res) => {
+  const { name, email } = req.body;
+
+  if (!name || !email || !validator.isEmail(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Valid name and email required",
+    });
   }
+
   try {
-    const exists = await User.findOne({ email, _id: { $ne: req.user.id } });
+    const exists = await User.findOne({
+      email,
+      _id: { $ne: req.user.id },
+    });
 
     if (exists) {
       return res.status(409).json({
         success: false,
-        message: "Email already user try another email",
+        message: "Email already used, try another email",
       });
     }
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { name, email },
-      { new: true, runValidators: true, select: "name email" },
+      {
+        new: true,
+        runValidators: true,
+        select: "name email",
+      }
     );
 
-    return res.status(201).json({
+    return res.status(200).json({
       success: true,
       user,
     });
+
   } catch (err) {
     console.log(err);
     return res.status(500).json({
       success: false,
-      message: "Server Error! User Login failed. Something went wrong!!!",
+      message: "Server Error! Something went wrong!",
     });
   }
 };
+
 
 // update Password
 export const updatePassword = async (req, res) => {
