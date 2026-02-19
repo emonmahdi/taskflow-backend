@@ -14,7 +14,8 @@ app.use(express.json());
 app.use(
   cors({
     origin: ["http://localhost:5173"],
-  }),
+    credentials: true,
+  })
 );
 
 // All Routes
@@ -30,3 +31,5 @@ connectDB();
 app.listen(PORT, () => {
   console.log(`Server running the port ${PORT}`);
 });
+
+export default app;
